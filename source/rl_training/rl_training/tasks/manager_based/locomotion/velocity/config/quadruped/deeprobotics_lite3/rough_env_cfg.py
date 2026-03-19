@@ -89,18 +89,28 @@ class DeeproboticsLite3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.events.randomize_push_robot = None
         self.events.randomize_actuator_gains.params["asset_cfg"].joint_names = self.joint_names
 
-        # set terrain generation probability to 0 for boxes and stairs
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].proportion = 0.4
-        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope"].proportion = 0.3
-        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope_inv"].proportion = 0.3
-        self.scene.terrain.terrain_generator.sub_terrains["boxes"].proportion = 0.0
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].proportion = 0.0
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].proportion = 0.0
+        # STAIRS TERRAIN CONFIGURATION - Enable stairs training
+        # set terrain generation probability: stairs enabled
+        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].proportion = 0.3
+        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope"].proportion = 0.2
+        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope_inv"].proportion = 0.2
+        self.scene.terrain.terrain_generator.sub_terrains["boxes"].proportion = 0.1
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].proportion = 0.1
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].proportion = 0.1
+
+        # Scale down the terrain features for the small Lite3 robot
+        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.01, 0.06)
+        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.01
+        
+        # Real stairs configuration: 30cm width x 14cm height
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].step_height_range = (0.14, 0.14)
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].step_width = 0.3
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].step_height_range = (0.14, 0.14)
+        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].step_width = 0.3
+
         # scale down the terrains because the robot is small
         # self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.025, 0.1)
         # self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_width = 0.8
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.01, 0.06)
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.01
 
         # ------------------------------Rewards------------------------------
         self.rewards.action_rate_l2.weight = -0.02 #-0.02
