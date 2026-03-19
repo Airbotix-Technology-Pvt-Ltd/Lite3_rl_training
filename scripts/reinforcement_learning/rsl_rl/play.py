@@ -194,6 +194,14 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # reset environment
     
     obs = env.get_observations()
+
+    #FIX: handle tuple/dict properly
+    if isinstance(obs, tuple):
+        obs = obs [0] #policy-obs only
+    elif isinstance(obs, dict):
+        obs = obs ["policy"]
+
+    actions = policy(obs)
     
     timestep = 0
     # simulate environment
