@@ -66,6 +66,23 @@ class DeeproboticsLite3AirbotixEnvCfg(DeeproboticsLite3RoughEnvCfg):
             },
         }
 
+        # For stair training, bias the command sampler toward steady forward motion
+        # along the stair direction instead of lateral or turning commands.
+        self.commands.base_velocity.ranges.lin_vel_x = (0.4, 1.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
+        self.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
+        self.commands.base_velocity.heading_command = False
+        self.commands.base_velocity.rel_heading_envs = 0.0
+        self.commands.base_velocity.rel_standing_envs = 0.0
+
+        # Phase 2: encourage higher foot lift and longer swing time for stair traversal.
+        self.rewards.feet_air_time.weight = 12.0
+        self.rewards.feet_air_time.params["threshold"] = 0.55
+        self.rewards.feet_air_time_variance.weight = -4.0
+        self.rewards.feet_height.weight = -0.3
+        self.rewards.feet_height.params["target_height"] = 0.14
+        self.rewards.feet_gait.weight = 0.75
+
         self.curriculum.terrain_levels = None
 
         # Remove terms that assume generated terrain or body-selection defaults that
