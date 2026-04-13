@@ -84,17 +84,17 @@ class DeeproboticsLite3AirbotixEnvCfg(DeeproboticsLite3RoughEnvCfg):
 
         # Reduce competing penalties that were encouraging a conservative, low-motion gait.
         self.rewards.action_rate_l2.weight = -0.003
-        self.rewards.flat_orientation_l2.weight = -1.5
-        self.rewards.undesired_contacts.weight = -0.2
+        self.rewards.flat_orientation_l2.weight = -0.75
+        self.rewards.undesired_contacts.weight = -5.0
         self.rewards.contact_forces.weight = -0.04
 
-        self.rewards.feet_air_time.weight = 4.0
-        self.rewards.feet_air_time.params["threshold"] = 0.4
+        self.rewards.feet_air_time.weight = 9.4
+        self.rewards.feet_air_time.params["threshold"] = 0.65
         self.rewards.feet_air_time_variance.weight = -4.0
         # Use body-frame swing height so stairs do not accidentally reward feet just
         # for being higher in the world while still in contact with a step.
         self.rewards.feet_height.weight = 0.0
-        self.rewards.feet_height_body.weight = -0.4
+        self.rewards.feet_height_body.weight = -3.0
         self.rewards.feet_height_body.params["target_height"] = -0.22
         self.rewards.feet_height_body.params["asset_cfg"].body_names = [self.foot_link_name]
         self.rewards.feet_gait.weight = 0.5

@@ -54,6 +54,6 @@ class DeeproboticsLite3AirbotixPPORunnerCfg(DeeproboticsLite3FlatPPORunnerCfg):
         super().__post_init__()
 
         self.experiment_name = "deeprobotics_lite3_airbotix"
-        self.policy.init_noise_std = 0.4
-        self.algorithm.entropy_coef = 0.003
+        self.policy.init_noise_std = 1.0
+        self.algorithm.entropy_coef = 0.01
         self.algorithm.learning_rate = 5.0e-4

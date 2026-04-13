@@ -63,48 +63,15 @@ def staged_command_lift_stairs(env: ManagerBasedRLEnv, env_ids: Sequence[int]) -
             base_velocity_ranges.lin_vel_y = [-0.20, 0.20]
             base_velocity_ranges.ang_vel_z = [-0.35, 0.35]
 
-            _set_reward_weight(env, "track_lin_vel_xy_exp", 5.5)
-            _set_reward_weight(env, "track_ang_vel_z_exp", 3.0)
-            _set_reward_weight(env, "action_rate_l2", -0.003)
-            _set_reward_weight(env, "feet_air_time", 4.0)
-            _set_reward_weight(env, "feet_height_body", -0.4)
-            _set_reward_weight(env, "feet_slide", -0.08)
-            _set_reward_weight(env, "feet_gait", 0.5)
-            _set_reward_weight(env, "stand_still", -0.1)
-            env.reward_manager.get_term_cfg("feet_air_time").params["threshold"] = 0.40
-            env.reward_manager.get_term_cfg("feet_height_body").params["target_height"] = -0.22
-
         elif stage == 1:
             base_velocity_ranges.lin_vel_x = [-0.50, 0.65]
             base_velocity_ranges.lin_vel_y = [-0.30, 0.30]
             base_velocity_ranges.ang_vel_z = [-0.45, 0.45]
 
-            _set_reward_weight(env, "track_lin_vel_xy_exp", 5.0)
-            _set_reward_weight(env, "track_ang_vel_z_exp", 3.0)
-            _set_reward_weight(env, "action_rate_l2", -0.002)
-            _set_reward_weight(env, "feet_air_time", 14.0)
-            _set_reward_weight(env, "feet_height_body", -2.0)
-            _set_reward_weight(env, "feet_slide", -0.15)
-            _set_reward_weight(env, "feet_gait", 1.0)
-            _set_reward_weight(env, "stand_still", -0.05)
-            env.reward_manager.get_term_cfg("feet_air_time").params["threshold"] = 0.25
-            env.reward_manager.get_term_cfg("feet_height_body").params["target_height"] = -0.14
-
         else:
             base_velocity_ranges.lin_vel_x = [-0.60, 0.80]
             base_velocity_ranges.lin_vel_y = [-0.40, 0.40]
             base_velocity_ranges.ang_vel_z = [-0.50, 0.50]
-
-            _set_reward_weight(env, "track_lin_vel_xy_exp", 5.0)
-            _set_reward_weight(env, "track_ang_vel_z_exp", 3.0)
-            _set_reward_weight(env, "action_rate_l2", -0.003)
-            _set_reward_weight(env, "feet_air_time", 9.0)
-            _set_reward_weight(env, "feet_height_body", -1.0)
-            _set_reward_weight(env, "feet_slide", -0.10)
-            _set_reward_weight(env, "feet_gait", 0.8)
-            _set_reward_weight(env, "stand_still", -0.08)
-            env.reward_manager.get_term_cfg("feet_air_time").params["threshold"] = 0.35
-            env.reward_manager.get_term_cfg("feet_height_body").params["target_height"] = -0.18
 
     return torch.tensor(float(stage), device=env.device)
 
