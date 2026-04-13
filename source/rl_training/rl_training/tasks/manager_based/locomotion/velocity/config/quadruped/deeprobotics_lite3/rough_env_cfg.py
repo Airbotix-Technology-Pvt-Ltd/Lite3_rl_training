@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from isaaclab.utils import configclass
+from isaaclab.terrains import TerrainImporterCfg
 
 from rl_training.tasks.manager_based.locomotion.velocity.velocity_env_cfg import LocomotionVelocityRoughEnvCfg
 # from isaaclab.sensors.ray_caster import GridPatternCfg
@@ -89,28 +90,12 @@ class DeeproboticsLite3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.events.randomize_push_robot = None
         self.events.randomize_actuator_gains.params["asset_cfg"].joint_names = self.joint_names
 
-        # STAIRS TERRAIN CONFIGURATION - Enable stairs training
-        # set terrain generation probability: stairs enabled
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].proportion = 0.2
-        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope"].proportion = 0.13
-        self.scene.terrain.terrain_generator.sub_terrains["hf_pyramid_slope_inv"].proportion = 0.13
-        self.scene.terrain.terrain_generator.sub_terrains["boxes"].proportion = 0.14
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].proportion = 0.2
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].proportion = 0.2
-
-        # Scale down the terrain features for the small Lite3 robot
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_range = (0.01, 0.06)
-        self.scene.terrain.terrain_generator.sub_terrains["random_rough"].noise_step = 0.01
-        
-        # Real stairs configuration: 30cm width x 14cm height
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].step_height_range = (0.10, 0.15)
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs"].step_width = 0.3
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].step_height_range = (0.10, 0.15)
-        self.scene.terrain.terrain_generator.sub_terrains["pyramid_stairs_inv"].step_width = 0.3
-
-        # scale down the terrains because the robot is small
-        # self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_height_range = (0.025, 0.1)
-        # self.scene.terrain.terrain_generator.sub_terrains["boxes"].grid_width = 0.8
+        # STAIRS TERRAIN CONFIGURATION - Loading custom USD
+        self.scene.terrain = TerrainImporterCfg(
+            prim_path="/World/ground",
+            terrain_type="usd",
+            usd_path="/home/lite3/work/Lite3Robot/Lite3_sdk_deploy/src/isaac_bridge/isaacsim/demo3_training_stairs_ref.usda",
+        )
 
         # ------------------------------Rewards------------------------------
         self.rewards.action_rate_l2.weight = -0.02 #-0.02
@@ -182,10 +167,13 @@ class DeeproboticsLite3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         # ------------------------------Terminations------------------------------
         self.terminations.illegal_contact = None
         # self.terminations.bad_orientation_2 = None
+        if hasattr(self.terminations, "terrain_out_of_bounds"):
+            delattr(self.terminations, "terrain_out_of_bounds")
 
         # ------------------------------Curriculums------------------------------
         # self.curriculum.command_levels.params["range_multiplier"] = (0.2, 1.0)
         self.curriculum.command_levels = None
+        self.curriculum.terrain_levels = None
 
         # ------------------------------Commands------------------------------
         self.commands.base_velocity.ranges.lin_vel_x = (-1.5, 1.5)
