@@ -94,7 +94,7 @@ class DeeproboticsLite3RoughEnvCfg(LocomotionVelocityRoughEnvCfg):
         self.scene.terrain = TerrainImporterCfg(
             prim_path="/World/ground",
             terrain_type="usd",
-            usd_path="/home/lite3/work/Lite3Robot/Lite3_sdk_deploy/src/isaac_bridge/isaacsim/demo3_training_stairs_ref.usda",
+            usd_path="/home/lite3/work/Lite3Robot/rl_training/source/rl_training/rl_training/assets/demo3_training_stairs_ref.usda",
         )
 
         # ------------------------------Rewards------------------------------
