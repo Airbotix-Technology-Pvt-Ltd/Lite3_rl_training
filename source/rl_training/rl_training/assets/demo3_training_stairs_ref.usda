@@ -4,7 +4,7 @@
 )
 
 def Xform "SceneEnv" (
-    prepend references = @/home/lite3/work/Lite3Robot/Lite3_sdk_deploy/src/isaac_bridge/isaacsim/demo3_training.usd@</Environment>
+    prepend references = @./demo3_training.usd@</Environment>
 )
 {
 }
