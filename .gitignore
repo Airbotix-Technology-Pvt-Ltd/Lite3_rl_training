@@ -37,3 +37,5 @@ _build
 
 
 **/usd/*
+source/rl_training/rl_training/assets/*.usd
+source/rl_training/rl_training/assets/*.usda

@@ -10,6 +10,24 @@ This repository is optimized for **High-Fidelity Simulation-to-Reality RL Develo
 
 ---
 
+> [!CAUTION]
+> ### 🚧 Branch `new_try_isaac_lab` — PARKED (April 2026)
+>
+> This branch attempted to replace Isaac Lab's procedural geometric terrain with a **mesh-based terrain imported directly from Isaac Sim** (stairs + slopes as USD mesh geometry). The approach was abandoned due to the following blocking issues:
+>
+> **1. GPU Memory / Environment Count Limit**
+> Mesh-based terrain has a far higher physics memory footprint than procedural terrain. Training is capped at **~512 parallel environments** (vs. 4096 previously). This alone reduces sample throughput by ~8×, killing convergence speed.
+>
+> **2. Robot Spawn Instability**
+> Because the terrain is mesh geometry (not analytic shapes), robots are sometimes spawned **intersecting the terrain or in nonsensical poses**. This causes invalid physics states and the robots cannot move, producing a flood of garbage experience in the replay buffer.
+>
+> **3. Training Does Not Converge**
+> The combination of fewer environments and corrupted rollouts keeps the mean reward **permanently negative**. No meaningful policy improvement was observed regardless of reward tuning.
+>
+> **Next step:** Switch to a new branch using IsaacLab-Quadruped-Tasks with procedural stair terrain (generator-based) for the Lite3 — see `../isaaclab-quadruped-tasks/`.
+
+---
+
 **Official Airbotix Source**: [Airbotix-Technology-Pvt-Ltd/Lite3_rl_training](https://github.com/Airbotix-Technology-Pvt-Ltd/Lite3_rl_training)
 
 ---
