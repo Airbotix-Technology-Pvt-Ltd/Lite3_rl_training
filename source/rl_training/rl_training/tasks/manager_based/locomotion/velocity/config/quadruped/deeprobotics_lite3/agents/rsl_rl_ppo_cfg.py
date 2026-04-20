@@ -46,3 +46,12 @@ class DeeproboticsLite3FlatPPORunnerCfg(DeeproboticsLite3RoughPPORunnerCfg):
 
         self.max_iterations = 10000
         self.experiment_name = "deeprobotics_lite3_flat"
+
+
+@configclass
+class DeeproboticsLite3StairPPORunnerCfg(DeeproboticsLite3RoughPPORunnerCfg):
+    def __post_init__(self):
+        super().__post_init__()
+
+        self.max_iterations = 10000
+        self.experiment_name = "deeprobotics_lite3_stair"
