@@ -71,3 +71,4 @@ class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
 
         # 4. Disable zero-weight rewards to prevent IsaacLab crashing on unconfigured parameters
         self.disable_zero_weight_rewards()
+scm-history-item:/home/lite3/work/Lite3Robot/rl_training?%7B%22repositoryId%22%3A%22scm7%22%2C%22historyItemId%22%3A%2289ede87496afda000eadb756cb4d3d43b74c52f8%22%2C%22historyItemParentId%22%3A%221a0e7fec975491ea5c2822775d5ac7b73ddd5ca2%22%2C%22historyItemDisplayId%22%3A%2289ede87%22%7D
