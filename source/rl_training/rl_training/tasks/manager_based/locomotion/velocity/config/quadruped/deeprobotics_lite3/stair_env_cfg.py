@@ -68,3 +68,6 @@ class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
 
         # 3. Copied event configuration: Ensure robot always spawns facing the stairs perfectly (yaw=0)
         self.events.randomize_reset_base.params["pose_range"]["yaw"] = (0.0, 0.0)
+
+        # 4. Disable zero-weight rewards to prevent IsaacLab crashing on unconfigured parameters
+        self.disable_zero_weight_rewards()
