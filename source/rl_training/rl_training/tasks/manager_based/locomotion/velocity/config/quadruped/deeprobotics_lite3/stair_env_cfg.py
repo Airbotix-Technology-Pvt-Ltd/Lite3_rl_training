@@ -60,6 +60,9 @@ class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
         # 1. Use the exact STAIRS_TERRAINS_CFG copied from isaac_quadruped_tasks
         self.scene.terrain.terrain_generator = STAIRS_TERRAINS_CFG
         self.scene.env_spacing = 8.0
+        
+        # INCREASE KNEE MOBILITY: The default 0.25 scale (14 degrees) is not enough for stairs.
+        self.actions.joint_pos.scale = {".*_HipX_joint": 0.125, "^(?!.*_HipX_joint).*": 0.5}
 
         # 2. Copied commands configuration: Force the robot to constantly walk forward and not strafe
         self.commands.base_velocity.ranges.lin_vel_x = (0.5, 1.0)
@@ -69,6 +72,16 @@ class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
         # 3. Copied event configuration: Ensure robot always spawns facing the stairs perfectly (yaw=0)
         self.events.randomize_reset_base.params["pose_range"]["yaw"] = (0.0, 0.0)
 
-        # 4. Disable zero-weight rewards to prevent IsaacLab crashing on unconfigured parameters
+        # 4. Fix Knee Stiffness: Remove joint deviation penalties so it can freely bend its knees
+        self.rewards.joint_deviation_l1.weight = 0.0
+        
+        # 5. Fix Knee Stiffness: Reduce energy starvation penalties that cause stiff-legged walking
+        self.rewards.action_rate_l2.weight = -0.005 # heavily reduced from -0.02
+        self.rewards.joint_power.weight = -2e-6 # heavily reduced from -2e-5
+        
+        # 6. Encourage Height: Target high steps to force the knee to actuate
+        self.rewards.feet_height.weight = 1.0 # Increase weight
+        self.rewards.feet_height.params["target_height"] = 0.15 # Force 15cm lift
+
+        # Disable zero-weight rewards to prevent IsaacLab crashing on unconfigured parameters
         self.disable_zero_weight_rewards()
-scm-history-item:/home/lite3/work/Lite3Robot/rl_training?%7B%22repositoryId%22%3A%22scm7%22%2C%22historyItemId%22%3A%2289ede87496afda000eadb756cb4d3d43b74c52f8%22%2C%22historyItemParentId%22%3A%221a0e7fec975491ea5c2822775d5ac7b73ddd5ca2%22%2C%22historyItemDisplayId%22%3A%2289ede87%22%7D
