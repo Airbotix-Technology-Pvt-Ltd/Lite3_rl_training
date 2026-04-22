@@ -11,7 +11,10 @@ from isaaclab.terrains import (
     HfInvertedPyramidSlopedTerrainCfg,
 )
 
+import isaaclab.sensors as sensor_utils
+from isaaclab.sensors import RayCasterCfg, patterns
 from rl_training.tasks.manager_based.locomotion.velocity.config.quadruped.deeprobotics_lite3.rough_env_cfg import DeeproboticsLite3RoughEnvCfg
+from rl_training.tasks.manager_based.locomotion.velocity.velocity_env_cfg import MySceneCfg
 
 # Copied verbatim from omni.isaac.lab_quadruped_tasks.cfg.quadruped_terrains_cfg
 STAIRS_TERRAINS_CFG = TerrainGeneratorCfg(
@@ -53,7 +56,86 @@ STAIRS_TERRAINS_CFG = TerrainGeneratorCfg(
 )
 
 @configclass
+class StairSceneCfg(MySceneCfg):
+    # Foot scanners: one per leg since regex is not supported in prim_path
+    feet_scanner_fl = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/FL_FOOT", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    feet_scanner_fr = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/FR_FOOT", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    feet_scanner_hl = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/HL_FOOT", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    feet_scanner_hr = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/HR_FOOT", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    # Knee/Thigh scanners
+    knee_scanner_fl = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/FL_THIGH", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    knee_scanner_fr = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/FR_THIGH", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    knee_scanner_hl = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/HL_THIGH", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+    knee_scanner_hr = RayCasterCfg(
+        prim_path="{ENV_REGEX_NS}/Robot/HR_THIGH", 
+        offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 2.0)),
+        ray_alignment="world",
+        max_distance=2.5,
+        pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=(0.0, 0.0)),
+        mesh_prim_paths=["/World/ground"],
+        debug_vis=False,
+    )
+
+@configclass
 class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
+    scene: StairSceneCfg = StairSceneCfg()
+
     def __post_init__(self):
         super().__post_init__()
 
@@ -72,16 +154,40 @@ class DeeproboticsLite3StairEnvCfg(DeeproboticsLite3RoughEnvCfg):
         # 3. Copied event configuration: Ensure robot always spawns facing the stairs perfectly (yaw=0)
         self.events.randomize_reset_base.params["pose_range"]["yaw"] = (0.0, 0.0)
 
-        # 4. Fix Knee Stiffness: Remove joint deviation penalties so it can freely bend its knees
-        self.rewards.joint_deviation_l1.weight = 0.0
+        # 4. Fix Knee Stiffness: Restore a light penalty to prevent "ugly" joint configurations
+        self.rewards.joint_deviation_l1.weight = -0.1
         
         # 5. Fix Knee Stiffness: Reduce energy starvation penalties that cause stiff-legged walking
-        self.rewards.action_rate_l2.weight = -0.005 # heavily reduced from -0.02
-        self.rewards.joint_power.weight = -2e-6 # heavily reduced from -2e-5
+        self.rewards.action_rate_l2.weight = -0.01 
+        self.rewards.joint_power.weight = -5e-6 
         
-        # 6. Encourage Height: Target high steps to force the knee to actuate
-        self.rewards.feet_height.weight = 1.0 # Increase weight
-        self.rewards.feet_height.params["target_height"] = 0.15 # Force 15cm lift
+        # 6. Encourage Height (The "Sticks"): Use the NEW Terrain-Aware reward
+        self.rewards.feet_height.weight = 0.0 # Disable absolute height
+        self.rewards.feet_height_terrain.weight = -5.0 
+        self.rewards.feet_height_terrain.params["target_height"] = 0.12 
+        self.rewards.feet_height_terrain.params["asset_cfg"].body_names = [self.foot_link_name]
+        self.rewards.feet_height_terrain.params["sensor_cfg"] = ["feet_scanner_fl", "feet_scanner_fr", "feet_scanner_hl", "feet_scanner_hr"]
+        self.rewards.feet_height_body.weight = -0.1 # Relax horizontal movement constraint
+        
+        # 7. Force Body Lift: Heavily penalize low torso height
+        self.rewards.base_height_l2.weight = -50.0
+        self.rewards.base_height_l2.params["target_height"] = 0.3
+        self.rewards.base_height_l2.params["asset_cfg"].body_names = ["TORSO"]
+        self.rewards.base_height_under.weight = -50.0
+        self.rewards.base_height_under.params["target_height"] = 0.25
+        self.rewards.base_height_under.params["asset_cfg"].body_names = ["TORSO"]
+        
+        # 8. Stay Level: Prevent the robot from leaning/crawling
+        self.rewards.flat_orientation_l2.weight = -15.0
+        
+        # 9. Strictly Prohibit Kneeling: Maximize penalty for knee/shank contacts
+        self.rewards.undesired_contacts.weight = -10.0
+        
+        # 10. Steady Knee Height: Proactively reward keeping knees at a safe height
+        self.rewards.knee_height_terrain.weight = -5.0
+        self.rewards.knee_height_terrain.params["target_height"] = 0.25 # 25cm above floor
+        self.rewards.knee_height_terrain.params["asset_cfg"].body_names = [".*_THIGH"]
+        self.rewards.knee_height_terrain.params["sensor_cfg"] = ["knee_scanner_fl", "knee_scanner_fr", "knee_scanner_hl", "knee_scanner_hr"]
 
         # Disable zero-weight rewards to prevent IsaacLab crashing on unconfigured parameters
         self.disable_zero_weight_rewards()

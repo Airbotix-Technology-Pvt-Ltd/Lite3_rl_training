@@ -543,24 +543,89 @@ def feet_distance_xy_exp(
 
 def feet_height(
     env: ManagerBasedRLEnv,
-    command_name: str,
-    asset_cfg: SceneEntityCfg,
     target_height: float,
+    asset_cfg: SceneEntityCfg,
     tanh_mult: float,
+    command_name: str,
 ) -> torch.Tensor:
-    """Reward the swinging feet for clearing a specified height off the ground"""
+    """Reward the swinging feet for clearing a specified height off the ground."""
     asset: RigidObject = env.scene[asset_cfg.name]
-    foot_z_target_error = torch.square(asset.data.body_pos_w[:, asset_cfg.body_ids, 2] - target_height)
-    # foot_velocity_tanh = torch.tanh(
-    #     tanh_mult * torch.linalg.norm(asset.data.body_lin_vel_w[:, asset_cfg.body_ids, :2], dim=2)
-    # )
-    # reward = torch.sum(foot_z_target_error * foot_velocity_tanh, dim=1)
-    reward = torch.sum(foot_z_target_error, dim=1)
-    # print(foot_z_target_error, "foot_z_target_error")
-    # no reward for zero command
-    reward *= torch.linalg.norm(env.command_manager.get_command(command_name), dim=1) > 0.2
-    # reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
+    # current height of the feet
+    current_height = asset.data.body_pos_w[:, asset_cfg.body_ids, 2]
+    # compute the reward
+    return torch.sum(torch.square(current_height - target_height), dim=1)
+
+
+def feet_height_terrain_l2(
+    env: ManagerBasedRLEnv,
+    target_height: float,
+    asset_cfg: SceneEntityCfg,
+    sensor_cfg: SceneEntityCfg | list[str],
+    command_name: str,
+) -> torch.Tensor:
+    """Penalize foot height from its target relative to the ground using L2 squared kernel."""
+    # extract the used quantities
+    asset: RigidObject = env.scene[asset_cfg.name]
+    
+    # Handle multiple sensors or single sensor
+    if isinstance(sensor_cfg, list):
+        terrain_pos_z_list = []
+        for s_name in sensor_cfg:
+            sensor: RayCaster = env.scene.sensors[s_name]
+            terrain_pos_z_list.append(torch.mean(sensor.data.ray_hits_w[..., 2], dim=-1))
+        terrain_pos_z = torch.cat(terrain_pos_z_list, dim=1)
+    else:
+        sensor: RayCaster = env.scene.sensors[sensor_cfg.name]
+        terrain_pos_z = torch.mean(sensor.data.ray_hits_w[..., 2], dim=-1)
+    
+    # Get world Z of feet
+    feet_pos_z = asset.data.body_pos_w[:, asset_cfg.body_ids, 2]
+    
+    # If a ray misses (NaN), we fall back to assuming ground is at current pos (0 clearance)
+    terrain_pos_z = torch.where(torch.isnan(terrain_pos_z), feet_pos_z, terrain_pos_z)
+    
+    # Calculate height above ground
+    current_height = feet_pos_z - terrain_pos_z
+    
+    # Compute the L2 squared penalty for deviation from target clearance
+    reward = torch.sum(torch.square(current_height - target_height), dim=1)
+    
+    # No reward for zero command
+    reward *= torch.linalg.norm(env.command_manager.get_command(command_name), dim=1) > 0.1
     return reward
+
+
+def knee_height_terrain(
+    env: ManagerBasedRLEnv,
+    target_height: float,
+    asset_cfg: SceneEntityCfg,
+    sensor_cfg: SceneEntityCfg | list[str],
+) -> torch.Tensor:
+    """Penalize knee height ONLY if it is below the target height relative to terrain."""
+    asset: RigidObject = env.scene[asset_cfg.name]
+    
+    # Handle multiple sensors or single sensor
+    if isinstance(sensor_cfg, list):
+        terrain_pos_z_list = []
+        for s_name in sensor_cfg:
+            sensor: RayCaster = env.scene.sensors[s_name]
+            terrain_pos_z_list.append(torch.mean(sensor.data.ray_hits_w[..., 2], dim=-1))
+        terrain_pos_z = torch.cat(terrain_pos_z_list, dim=1)
+    else:
+        sensor: RayCaster = env.scene.sensors[sensor_cfg.name]
+        terrain_pos_z = torch.mean(sensor.data.ray_hits_w[..., 2], dim=-1)
+    
+    # Get world Z of knees (thighs) and terrain under them
+    knee_pos_z = asset.data.body_pos_w[:, asset_cfg.body_ids, 2]
+    
+    # Fallback for NaN
+    terrain_pos_z = torch.where(torch.isnan(terrain_pos_z), knee_pos_z - target_height, terrain_pos_z)
+    
+    # Height above ground
+    current_height = knee_pos_z - terrain_pos_z
+    
+    # Penalty only if BELOW target
+    return torch.sum(torch.square(torch.clamp(target_height - current_height, min=0.0)), dim=1)
 
 
 def feet_height_body(
@@ -700,6 +765,26 @@ def base_height_l2(
     reward = torch.square(asset.data.root_pos_w[:, 2] - adjusted_target_height)
     # reward *= torch.clamp(-env.scene["robot"].data.projected_gravity_b[:, 2], 0, 0.7) / 0.7
     return reward
+
+
+def base_height_under_penalty(
+    env: ManagerBasedRLEnv,
+    target_height: float,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    sensor_cfg: SceneEntityCfg | None = None,
+) -> torch.Tensor:
+    """Penalize asset height ONLY if it is below the target height."""
+    asset: RigidObject = env.scene[asset_cfg.name]
+    if sensor_cfg is not None:
+        sensor: RayCaster = env.scene[sensor_cfg.name]
+        ray_hits = sensor.data.ray_hits_w[..., 2]
+        if torch.isnan(ray_hits).any() or torch.isinf(ray_hits).any() or torch.max(torch.abs(ray_hits)) > 1e6:
+            current_height_above_terrain = asset.data.root_link_pos_w[:, 2]
+        else:
+            current_height_above_terrain = asset.data.root_pos_w[:, 2] - torch.mean(ray_hits, dim=1)
+    else:
+        current_height_above_terrain = asset.data.root_pos_w[:, 2]
+    return torch.square(torch.clamp(target_height - current_height_above_terrain, min=0.0))
 
 
 def lin_vel_z_l2(env: ManagerBasedRLEnv, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:

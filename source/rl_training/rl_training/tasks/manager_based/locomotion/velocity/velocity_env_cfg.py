@@ -395,6 +395,16 @@ class RewardsCfg:
             "target_height": 0.0,
         },
     )
+
+    base_height_under = RewTerm(
+        func=mdp.base_height_under_penalty,
+        weight=0.0,
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=""),
+            "sensor_cfg": SceneEntityCfg("height_scanner_base"),
+            "target_height": 0.0,
+        },
+    )
     body_lin_acc_l2 = RewTerm(
         func=mdp.body_lin_acc_l2,
         weight=0.0,
@@ -673,6 +683,28 @@ class RewardsCfg:
             "asset_cfg": SceneEntityCfg("robot", body_names=""),
             "tanh_mult": 2.0,
             "target_height": 0.05,
+            "command_name": "base_velocity",
+        },
+    )
+
+    feet_height_terrain = RewTerm(
+        func=mdp.feet_height_terrain_l2,
+        weight=0.0,
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=""),
+            "sensor_cfg": SceneEntityCfg("feet_scanner"),
+            "target_height": 0.0,
+            "command_name": "base_velocity",
+        },
+    )
+
+    knee_height_terrain = RewTerm(
+        func=mdp.feet_height_terrain_l2,
+        weight=0.0,
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=""),
+            "sensor_cfg": SceneEntityCfg("knee_scanner"),
+            "target_height": 0.0,
             "command_name": "base_velocity",
         },
     )
